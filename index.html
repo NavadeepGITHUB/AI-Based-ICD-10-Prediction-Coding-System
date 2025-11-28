@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI-Based Medical Coding System</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(120deg, #e3f2fd, #ffffff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 850px;
+      background: white;
+      padding: 30px;
+      border-radius: 18px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .header img {
+      width: 40px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      color: #0d47a1;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 130px;
+      padding: 15px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s ease;
+    }
+
+    textarea:focus {
+      border: 1px solid #1976d2;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      background: linear-gradient(90deg, #1976d2, #00acc1);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      opacity: 0.95;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .results {
+      margin-top: 25px;
+      display: none;
+    }
+
+    .results h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .code-card {
+      background: #f6f9fc;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border-left: 4px solid #1976d2;
+    }
+
+    .code-card strong {
+      color: #0d47a1;
+    }
+
+    .evidence {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #444;
+      font-style: italic;
+    }
+
+    .similarity {
+      font-size: 12px;
+      margin-top: 4px;
+      color: #777;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <img src="https://cdn-icons-png.flaticon.com/512/2966/2966484.png" alt="medical"/>
+      <h1>AI-Based ICD-10 Prediction & Coding System</h1>
+    </div>
+
+    <p class="subtitle">
+      Enter the patient's clinical note below to predict relevant ICD-10 medical codes.
+    </p>
+
+    <textarea id="noteInput" placeholder="Example: Patient has mild cough and asthma..."></textarea>
+
+    <button id="predictBtn">Predict ICD Codes</button>
+
+    <div class="results" id="resultsSection">
+      <h3>Prediction Results</h3>
+      <div id="codesContainer"></div>
+    </div>
+
+    <footer>
+      These are your Results
+    </footer>
+
+  </div>
+
+<script>
+  const button = document.getElementById('predictBtn');
+  const textarea = document.getElementById('noteInput');
+  const resultsSection = document.getElementById('resultsSection');
+  const codesContainer = document.getElementById('codesContainer');
+
+  button.addEventListener('click', async () => {
+    const note = textarea.value.trim();
+    if (!note) {
+      alert('Please enter a clinical note.');
+      return;
+    }
+
+    button.textContent = 'Analyzing...';
+    button.disabled = true;
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ note: note })
+      });
+
+      const data = await response.json();
+
+      codesContainer.innerHTML = '';
+      resultsSection.style.display = 'block';
+
+      data.candidate_codes.forEach(code => {
+        const div = document.createElement('div');
+        div.className = 'code-card';
+
+        div.innerHTML = `
+          <strong>ICD Code:</strong> ${code.code}<br>
+          <strong>Reason:</strong> ${code.reason}
+          <div class="evidence">Evidence: ${code.evidence}</div>
+          <div class="similarity">Similarity Score: ${code.similarity}</div>
+        `;
+
+        codesContainer.appendChild(div);
+      });
+
+    } catch (error) {
+      alert('Error connecting to server. Make sure backend is running on http://127.0.0.1:8000');
+    }
+
+    button.textContent = 'Predict ICD Codes';
+    button.disabled = false;
+  });
+</script>
+
+</body>
+</html>
